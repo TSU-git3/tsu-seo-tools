@@ -8,19 +8,29 @@
   const waiting = {};
   let seq = 0;
   function ensureWorker() {
-    if (worker) return;
-    const src = 'onmessage=e=>setTimeout(()=>postMessage(e.data.id),e.data.ms)';
-    worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
-    worker.onmessage = (e) => {
-      const done = waiting[e.data];
-      delete waiting[e.data];
-      if (done) done();
-    };
+    if (worker !== null) return;
+    try {
+      const src = 'onmessage=e=>setTimeout(()=>postMessage(e.data.id),e.data.ms)';
+      let url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      if (window.trustedTypes) {
+        T._ttu = T._ttu || trustedTypes.createPolicy('tsu-worker-' + Date.now(), { createScriptURL: (x) => x });
+        url = T._ttu.createScriptURL(url);
+      }
+      worker = new Worker(url);
+      worker.onmessage = (e) => {
+        const done = waiting[e.data];
+        delete waiting[e.data];
+        if (done) done();
+      };
+    } catch (e) {
+      worker = false; // page forbids workers: fall back to setTimeout (slower only in hidden tabs)
+    }
   }
   // setTimeout is throttled to ~1/min in hidden tabs; a worker timer is not.
   T.wait = (ms) =>
     new Promise((resolve) => {
       ensureWorker();
+      if (!worker) return setTimeout(resolve, ms);
       const id = ++seq;
       waiting[id] = resolve;
       worker.postMessage({ id, ms });
