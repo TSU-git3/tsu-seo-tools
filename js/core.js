@@ -22,6 +22,15 @@
         delete waiting[e.data];
         if (done) done();
       };
+      // A page can accept the worker and still block it from running: then release every wait and use setTimeout.
+      worker.onerror = () => {
+        worker = false;
+        Object.keys(waiting).forEach((id) => {
+          const done = waiting[id];
+          delete waiting[id];
+          setTimeout(done, 0);
+        });
+      };
     } catch (e) {
       worker = false; // page forbids workers: fall back to setTimeout (slower only in hidden tabs)
     }
@@ -34,6 +43,13 @@
       const id = ++seq;
       waiting[id] = resolve;
       worker.postMessage({ id, ms });
+      // Backup in case the worker is silently blocked; resolving twice is harmless.
+      setTimeout(() => {
+        if (waiting[id]) {
+          delete waiting[id];
+          resolve();
+        }
+      }, ms + 2000);
     });
 
   // Output for the browser tool: no = & % ? ; (they get blocked), cut to max characters.
