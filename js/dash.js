@@ -146,23 +146,25 @@
     return weeks;
   };
 
-  // Top sellers: drop listings that make up a confirmed fake (1-order listings whose gmv adds up to the fake, ±1),
-  // then the top n by gmv plus the top n by orders, without duplicates.
+  // Top sellers: take confirmed fakes out of the listing rows, then the top n by gmv plus the top n by orders, no duplicates.
+  // A fake with items [{id, gmv}] loses exactly those amounts (one order each); without items, only a single
+  // 1-order listing with the same gmv (±1) is removed. Anything else is reported as unmatched, never guessed.
   T.dash.top = (rows, fakesInPeriod, n = 8) => {
-    let left = rows.slice();
+    let left = rows.map((r) => Object.assign({}, r));
     const unmatched = [];
     (fakesInPeriod || []).forEach((f) => {
-      const ones = left.filter((r) => r.orders === 1);
-      let found = null;
-      for (let i = 0; i < ones.length && !found; i++) {
-        if (Math.abs(ones[i].gmv - f.gmv) <= 1) found = [ones[i]];
-        for (let j = i + 1; j < ones.length && !found; j++) {
-          if (Math.abs(ones[i].gmv + ones[j].gmv - f.gmv) <= 1) found = [ones[i], ones[j]];
-          for (let k = j + 1; k < ones.length && !found; k++)
-            if (Math.abs(ones[i].gmv + ones[j].gmv + ones[k].gmv - f.gmv) <= 1) found = [ones[i], ones[j], ones[k]];
-        }
+      if (f.items && f.items.length) {
+        f.items.forEach((it) => {
+          const r = left.find((x) => String(x.id) === String(it.id));
+          if (!r) return unmatched.push(f.date + ' ' + it.id);
+          r.orders -= 1;
+          r.gmv -= it.gmv;
+        });
+        left = left.filter((r) => r.orders > 0);
+        return;
       }
-      if (found) left = left.filter((r) => !found.includes(r));
+      const one = left.filter((r) => r.orders === 1 && Math.abs(r.gmv - f.gmv) <= 1);
+      if (one.length === 1) left = left.filter((r) => r !== one[0]);
       else unmatched.push(f.date);
     });
     const byG = left.slice().sort((a, b) => b.gmv - a.gmv).slice(0, n);
