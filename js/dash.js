@@ -173,6 +173,15 @@
     return { top, unmatched };
   };
 
+  // Search Console week columns, compact, for carrying from the Search Console tab to the shop tab:
+  // rows [week, gClicks, gImpr, gPos, gDays] for the same Monday weeks as weekly(days, null, end).
+  T.dash.gWeeks = (g, end, n = 8) => T.dash.weekly({}, g, end, n).map((w) => [w.week, w.gClicks, w.gImpr, w.gPos, w.gDays]);
+  T.dash.withG = (weeks, rows) =>
+    weeks.map((w) => {
+      const r = (rows || []).find((x) => x[0] === w.week) || [];
+      return Object.assign({}, w, { gClicks: r[1] || 0, gImpr: r[2] || 0, gPos: r[3] == null ? null : r[3], gDays: r[4] || 0 });
+    });
+
   // Read a long JSON result in pieces through the browser tool.
   T.dash.piece = (obj, i, size = 900) => {
     const s = JSON.stringify(obj).replace(/[=&%?;]/g, ' ');
