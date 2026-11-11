@@ -12,6 +12,10 @@ Loaded in the browser by a fixed commit, with a SHA-256 check before anything ru
 | `core.js` | Timer that keeps its pace in background tabs, compact tool output, page-text helpers, JSON-LD reader, gzip download |
 | `crawl.js` | Sitemap reader + one-page-at-a-time crawl: status, redirects, title, meta, H1, canonical, robots, hreflang, JSON-LD, word count, images without alt, flags and summaries, in-text link check |
 | `prom_search.js` | Prom marketplace search loop: positions of one company (paid slots apart from organic), top sellers, category picked by Prom |
+| `dash.js` | Date and period maths for a dashboard: fake-order removal, last 30 / 14 days vs previous, Monday weeks, Search Console block, top sellers (no network) |
+| `prom_analytics.js` | Prom cabinet analytics by day and per listing (signed-in cabinet tab) |
+| `gsc.js` | Reads the daily table of a Search Console Performance report |
+| `rozetka_seller.js` | Rozetka seller cabinet: orders by period and week, top items, rating, cards, new buyer questions (signed-in cabinet tab; the sign-in key never leaves the page) |
 
 The scripts only read pages. Anything that changes data stays a separate, approved step.
 
