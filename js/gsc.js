@@ -25,7 +25,7 @@
 
   // Columns are found by their header text, so the metric order doesn't matter.
   G.dates = () => {
-    const table = [...document.querySelectorAll('table')].find((t) => /Date/i.test(t.innerText) && /Clicks|Impressions/i.test(t.innerText));
+    const table = [...document.querySelectorAll('table')].find((t) => /Date|Day/i.test(t.innerText) && /Clicks|Impressions/i.test(t.innerText));
     if (!table) return 'no date table on the page';
     const heads = [...table.querySelectorAll('thead th, tr:first-child th')].map((th) => T.text(th).toLowerCase());
     const col = (re) => heads.findIndex((h) => re.test(h));
