@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Print the browser loader for the current commit: fetches each script by commit hash,
-checks its SHA-256 and only then runs it. Paste the printed line into the notes.
+checks its SHA-256 and only then runs it (through a Trusted Types policy on pages that require one, e.g. Search Console). Paste the printed line into the notes.
 
   python3 tools/loader.py [js/core.js js/crawl.js ...]   (default: every file in js/, core first)
 """
@@ -20,7 +20,9 @@ def main():
         "await (async (c, files) => { const out = []; for (const [p, h] of files) { "
         "const t = await (await fetch('https://raw.githubusercontent.com/" + REPO + "/' + c + '/' + p)).text(); "
         "const d = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join(''); "
-        "if (d !== h) throw new Error('hash mismatch ' + p); (0, eval)(t); out.push(p); } return 'loaded ' + out.join(' '); })"
+        "if (d !== h) throw new Error('hash mismatch ' + p); "
+        "let s = t; if (window.trustedTypes) { window.__tsuTT = window.__tsuTT || trustedTypes.createPolicy('tsu-loader-' + Date.now(), { createScript: x => x }); s = window.__tsuTT.createScript(t); } "
+        "(0, eval)(s); out.push(p); } return 'loaded ' + out.join(' '); })"
         "('" + commit + "', " + str(pairs).replace(" ", "") + ")"
     )
     print(f"commit {commit}")
